@@ -46,7 +46,10 @@ xlwings addin install
 # 7. Installiere 1Password
 brew install 1password-cli
 
-# 8. Virtuelle Umgebung deaktivieren
+# 8. Install terminal notifier
+brew install terminal-notifier
+
+# 9. Virtuelle Umgebung deaktivieren
 echo "Deaktiviere virtuelle Umgebung..."
 deactivate
 
