@@ -227,7 +227,7 @@ def get_credentials(sheet_name, password_reference):
         sys.exit(1)
 
     # Parsen der Ausgabe, um Benutzername und Passwort zu extrahieren
-    credentials = credentials_result.stdout.strip().split(',')
+    credentials = credentials_result.stdout.strip().split(',', 1)
     if len(credentials) < 1:
         get_excel_loader().log_to_excel("Benutzername und Passwort konnten nicht korrekt extrahiert werden.")
         sys.exit(1)
