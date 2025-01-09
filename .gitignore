@@ -1,0 +1,10 @@
+# Python stuff
+venv/
+__pycache__/
+# IntelliJ
+.idea/
+ProJi.iml
+# Mein lokales Zeitbuchenfile
+TimeBooking.xlsm
+~$TimeBooking.xlsm
+

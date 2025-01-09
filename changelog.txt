@@ -1,0 +1,11 @@
+Changelog for ProJi:
+- Install Xlwings via Shell Script
+- Fix copying of multiple cells in Projektron Ticket Section
+- Transfer booking text to Jira if wanted -> Provided Setting in VBA-Settings Sheet
+- Implemented Projektron Status in Excel
+- Don't abort Projektron Booking, if wrong Projekt Task ID found. Log error to excel and skip entry instead
+- Removed hard urls from coding and provided setting in VBA-Settigns Sheet
+- Better Console Outputs
+- Handling of multiple Bookings per Day to one Ticket in JIRA. Primary Key here is, mail, day and duration
+- Introduced excelLoader to reduce duplicate coding and did some refactoring
+- Sent "," to Jira in Case of German Locale, otherwise we will use "."
