@@ -9,3 +9,7 @@ Changelog for ProJi:
 - Handling of multiple Bookings per Day to one Ticket in JIRA. Primary Key here is, mail, day and duration
 - Introduced excelLoader to reduce duplicate coding and did some refactoring
 - Sent "," to Jira in Case of German Locale, otherwise we will use "."
+
+Changelog 10.01.2025
+- Fetch User Locale to use , or . For Projecton Booking
+- Open Projektron Book Page after login, instead of expecting the first page to be a booking page

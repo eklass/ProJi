@@ -11,11 +11,14 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import Select
+
 
 from excelLoader import ExcelLoader
 
 vba_settings_sheet_name = 'VBA-Settings'
 projektron_domain_cell = 'H17'
+projetron_locale_setting_cell = 'H20'
 projektron_status_column = 'L'
 console_output_cell = 'E27'
 global_excel_loader = None
@@ -33,12 +36,8 @@ def wait_for_element_to_be_clickable(driver, locator, duration=10):
 
 def login_to_website(driver, email, password):
     global projektron_domain_cell
-    projektron_domain = get_excel_loader().vba_settings_sheet.range(projektron_domain_cell).value.rstrip("/")
-    full_projektron_url = f'{projektron_domain}/bcs'
-
+    full_projektron_url = open_time_booking_page_in_projektron(driver)
     get_excel_loader().log_to_excel(f'Log in to {full_projektron_url} ...')
-
-    driver.get(f'{full_projektron_url}')
     wait_for_element_to_be_clickable(driver, (By.CLASS_NAME, 'oAuthLoginLink')).click()
 
     # Warte, bis das E-Mail-Eingabefeld interaktionsbereit ist und gib die E-Mail ein
@@ -58,6 +57,15 @@ def login_to_website(driver, email, password):
     login_button.click()
 
     return extract_2fa_code_and_display(driver)
+
+
+def open_time_booking_page_in_projektron(driver):
+    global projektron_locale_setting_cell, projektron_domain_cell
+    projektron_domain = get_excel_loader().vba_settings_sheet.range(projektron_domain_cell).value.rstrip("/")
+    full_projektron_url = f'{projektron_domain}/bcs/mybcs/dayeffortrecording/display'
+    driver.get(f'{full_projektron_url}')
+    return full_projektron_url
+
 
 def extract_2fa_code_and_display(driver):
     # Wait for the 2FA number to be displayed
@@ -87,17 +95,19 @@ def select_date(driver, day, month, year):
     day_link.click()
 
 
-def create_and_fill_tasks(driver, date_day, date_month, date_year, task_details_list):
+def create_and_fill_tasks(driver, date_day, date_month, date_year, task_details_list, projektron_user_locale):
     global console_output_cell
     select_date(driver, date_day, date_month, date_year)
     for task_details in task_details_list:
         task_group_oid = task_details['task_group_oid']
-        duration = task_details['duration']
         description = task_details['description']
         row_in_timesheet = task_details['row_in_timesheet']
+        duration = task_details['duration']
+        formatted_hours = convert_hours_format(duration, projektron_user_locale)
+
         try:
             task_row = add_task_row(driver, task_group_oid)
-            fill_task_details(task_row, duration, description)
+            fill_task_details(task_row, formatted_hours, description)
         except TimeoutException:
             get_excel_loader().log_to_excel(f"TimeoutException: TaskID {task_group_oid} konnte nicht gefunden werden.")
             get_excel_loader().get_time_sheet().range(projektron_status_column + row_in_timesheet).value = "Fehler"
@@ -238,6 +248,7 @@ def main(tasks_to_add, date, sheet_name, headless, user, password):
     time_sheet, vba_settings_sheet, wb = excel_loader.load_excel(sheet_name)
     set_excel_loader(excel_loader)
     response = ''
+    projektron_user_locale = None
 
     if time_sheet is not None:
         get_excel_loader().log_to_excel("Setup Connection ...")
@@ -264,6 +275,16 @@ def main(tasks_to_add, date, sheet_name, headless, user, password):
 
     close_popups_in_projektron(driver)
 
+    projektron_user_locale = get_excel_loader().vba_settings_sheet.range(projetron_locale_setting_cell).value
+    is_locale_set = projektron_user_locale != None and projektron_user_locale != ""
+
+    if not is_locale_set:
+        projektron_user_locale = get_user_language(driver)
+        get_excel_loader().vba_settings_sheet.range(projetron_locale_setting_cell).value = projektron_user_locale
+        # Open Task Booking Page again, to proceed booking
+        open_time_booking_page_in_projektron(driver)
+
+
     # Filtere Tasks, die bereits existieren
     get_excel_loader().log_to_excel(f"Check Duplicate Booking for {len(tasks_to_add)} tasks ...")
 
@@ -272,7 +293,7 @@ def main(tasks_to_add, date, sheet_name, headless, user, password):
     if tasks_to_add.__len__() > 0:
         # Füge nur neue Tasks hinzu
         get_excel_loader().log_to_excel(f"Booking {len(tasks_to_add)} tasks ...")
-        create_and_fill_tasks(driver, date.day, date.month, date.year, tasks_to_add)
+        create_and_fill_tasks(driver, date.day, date.month, date.year, tasks_to_add, projektron_user_locale)
         get_excel_loader().log_to_excel("Save ...")
         save(driver)  # Speichere alle gemachten Eingaben
         response = get_and_print_response(driver, response)  # Gibt die Rückmeldung der Seite in der Konsole aus
@@ -299,6 +320,38 @@ def projektronLogin(driver, password, user, output_queue):
         driver.quit()
 
     output_queue.put((driver, two_fa_code))
+
+
+def get_user_language(driver):
+    global projektron_domain_cell
+    projektron_domain = get_excel_loader().vba_settings_sheet.range(projektron_domain_cell).value.rstrip("/")
+    """
+    Überprüft die Spracheinstellung des Benutzers im Profil.
+    """
+    # Gehe zu den Profileinstellungen
+    profile_url = f'{projektron_domain}/bcs/mybcs/profile/edit'
+
+    driver.get(profile_url)
+
+    # Finde das Dropdown-Element für die Sprache
+    language_select_element = driver.find_element(By.ID, "label_default_lang_lang")
+    language_dropdown = Select(language_select_element)
+
+    # Hole die aktuell ausgewählte Sprache
+    selected_language = language_dropdown.first_selected_option.get_attribute("value")
+
+    return selected_language
+
+def convert_hours_format(hours, language):
+    """
+    Konvertiert die Stunden in das richtige Format basierend auf der Sprache.
+    """
+    if language != "de_DE":
+        # Für die Schweiz verwenden wir einen Punkt
+        return str(hours).replace(",", ".")
+    else:
+        # Für andere Sprachen verwenden wir ein Komma
+        return str(hours).replace(".", ",")
 
 
 def set_excel_loader(excel_loader):
