@@ -17,7 +17,7 @@ from selenium.webdriver.support.ui import Select
 from utils.getPasswordFrom1Password import get_credentials
 from utils.Constants import PROJETRON_LOCALE_SETTING_CELL, PROJEKTRON_STATUS_COLUMN, PROJEKTRON_DOMAIN_CELL, \
     ONE_PASSWORD_REFERENCE_PROJEKTRON_CELL
-from utils.excelLoader import ExcelLoader
+from utils.excelLoader import ExcelLoader, format_duration
 
 global_excel_loader = None
 
@@ -348,13 +348,6 @@ def get_user_language(driver):
     selected_language = language_dropdown.first_selected_option.get_attribute("value")
 
     return selected_language
-
-def format_duration(duration_hours, user_locale):
-    formatted_duration = f"{duration_hours:.2f}"  # Dezimalstellen explizit formatieren
-    if user_locale.startswith("de_DE"):  # Prüfen, ob das Locale deutschsprachig ist
-        return formatted_duration.replace('.', ',')  # Punkt durch Komma ersetzen
-    else:
-        return formatted_duration.replace(',', '.')
 
 
 def set_excel_loader(excel_loader):

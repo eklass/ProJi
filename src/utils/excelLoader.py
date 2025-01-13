@@ -85,3 +85,11 @@ def convert_time_to_decimal(time_str):
 
     hours, minutes = map(int, time_str.split(":"))
     return hours + minutes / 60.0
+
+
+def format_duration(duration_hours, user_locale):
+    formatted_duration = f"{duration_hours:.2f}"  # Dezimalstellen explizit formatieren
+    if user_locale.startswith("de_DE"):  # Prüfen, ob das Locale deutschsprachig ist
+        return formatted_duration.replace('.', ',')  # Punkt durch Komma ersetzen
+    else:
+        return formatted_duration.replace(',', '.')

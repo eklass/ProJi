@@ -7,8 +7,7 @@ from utils.getPasswordFrom1Password import get_credentials
 
 from utils.Constants import JIRA_TICKET_COLUMN, TIME_COLUMN, COMMENT_COLUMN, BOOK_COMMENTS_TO_JIRA_CHECK_CELL, \
     JIRA_DOMAIN_CELL, ONE_PASSWORD_REFERENCE_JIRA_CELL
-from utils.excelLoader import ExcelLoader, extract_time_from_cell
-import locale
+from utils.excelLoader import ExcelLoader, extract_time_from_cell, format_duration
 
 global_excel_loader = None
 
@@ -126,11 +125,6 @@ def get_user_info(headers):
     else:
         print(f"Fehler beim Abrufen der Benutzerdaten: {response.status_code}")
         return None
-
-
-def format_duration(duration_hours, user_locale):
-    locale.setlocale(locale.LC_ALL, user_locale)  # Beispiel für Deutsch
-    return locale.format_string("%.2f", duration_hours)
 
 
 def get_open_tickets_for_user(user_email, headers):
