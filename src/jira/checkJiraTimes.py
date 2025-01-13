@@ -48,7 +48,7 @@ def fetch_jira_data(ticket_number, date):
 
                 matching_durations.append(f"{total_time_logged_hours:02d}:{total_time_logged_minutes:02d}")
 
-        return matching_durations if matching_durations else None
+        return matching_durations
     else:
         get_excel_loader().log_to_excel(f"Fehler beim Abrufen der Arbeitsprotokolle für Ticket {ticket_number}: {response.text}")
         return None
