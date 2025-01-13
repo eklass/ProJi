@@ -2,41 +2,23 @@
 import sys
 import traceback
 import requests
-import checkJiraTimes
-import getPasswordFrom1Password
-from excelLoader import ExcelLoader
+from jira import checkJiraTimes
+from utils.getPasswordFrom1Password import get_credentials
+
+from utils.Constants import JIRA_TICKET_COLUMN, TIME_COLUMN, COMMENT_COLUMN, BOOK_COMMENTS_TO_JIRA_CHECK_CELL, \
+    JIRA_DOMAIN_CELL, ONE_PASSWORD_REFERENCE_JIRA_CELL
+from utils.excelLoader import ExcelLoader, extract_time_from_cell
 import locale
 
-jira_ticket_column = 'B'
-time_column = 'D'
-comment_column = 'C'
-jira_status_column = 'K'
-console_output_cell = 'E27'
-vba_settings_sheet_name = 'VBA-Settings'
-jira_domain_cell = 'H13'
-book_comments_to_jira_check_cell = 'H14'
 global_excel_loader = None
-
-def extract_time_from_cell(cell):
-    cell_value = cell.value
-    try:
-        # Versuche, den Wert in einen float zu konvertieren
-        hours = float(cell_value) * 24  # Zelle wird in Stunden umgerechnet
-        return hours  # Gib die Stunden als Float zurück
-    except (ValueError, TypeError):
-        # Gib eine sinnvolle Fehlermeldung oder einen Fallback zurück, falls die Konvertierung fehlschlägt
-        return None
 
 
 def is_book_comments_to_jira_active():
-    global book_comments_to_jira_check_cell
-    return 'true' if get_excel_loader().vba_settings_sheet.range(book_comments_to_jira_check_cell).value == 'true' else 'false'
+    return 'true' if get_excel_loader().vba_settings_sheet.range(BOOK_COMMENTS_TO_JIRA_CHECK_CELL).value == 'true' else 'false'
 
 
 def post_worklog_to_jira(ticket_number, duration_formatted, comment, date, headers):
-    global jira_domain_cell
-
-    jira_domain = get_excel_loader().vba_settings_sheet.range(jira_domain_cell).value.rstrip("/")
+    jira_domain = get_excel_loader().vba_settings_sheet.range(JIRA_DOMAIN_CELL).value.rstrip("/")
     full_jira_url = f'{jira_domain}/rest/api/2/issue/{{issueKey}}/worklog'
 
     if is_book_comments_to_jira_active() == 'false' or comment is None:
@@ -63,15 +45,17 @@ def post_worklog_to_jira(ticket_number, duration_formatted, comment, date, heade
 
 
 # Method will be called from Excel Makro via xlwings
-def post_jira_times(sheet_name, password_reference):
+def post_jira_times(sheet_name):
     excel_loader = ExcelLoader()
     time_sheet, vba_settings_sheet, wb = excel_loader.load_excel(sheet_name)
     set_excel_loader(excel_loader)
 
+    password_reference = get_excel_loader().vba_settings_sheet.range(ONE_PASSWORD_REFERENCE_JIRA_CELL).value
+
     try:
         get_excel_loader().log_to_excel("Posting Jira Times... ")
 
-        jira_credentials = getPasswordFrom1Password.get_credentials(sheet_name, password_reference)
+        jira_credentials = get_credentials(sheet_name, password_reference)
         personal_access_token = jira_credentials['password']
         headers = {
             'Authorization': f'Bearer {personal_access_token}'
@@ -87,13 +71,14 @@ def post_jira_times(sheet_name, password_reference):
             return
 
         checkJiraTimes.set_headers(sheet_name, password_reference)
+        user_info = get_user_info(headers)
+        user_locale = user_info.get("locale")
 
         for row in range(7, 22):
-            ticket_number = time_sheet.range(f'{jira_ticket_column}{row}').value
-            duration = time_sheet.range(f'{time_column}{row}').value
-            user_locale = get_user_locale(headers)
+            ticket_number = time_sheet.range(f'{JIRA_TICKET_COLUMN}{row}').value
+            duration = time_sheet.range(f'{TIME_COLUMN}{row}').value
 
-            duration_formatted = extract_time_from_cell(time_sheet.range(f'{time_column}{row}')) if isinstance(duration, float) else duration
+            duration_formatted = extract_time_from_cell(time_sheet.range(f'{TIME_COLUMN}{row}')) if isinstance(duration, float) else duration
             if not duration_formatted or duration_formatted == 0.0:
                 continue
 
@@ -101,7 +86,7 @@ def post_jira_times(sheet_name, password_reference):
             if ticket_number is not None:
                 if not checkJiraTimes.compare_jira_and_excel_times(sheet_name, row, date):
                     get_excel_loader().log_to_excel(f"###### {date.strftime('%Y-%m-%d')} ######\n")
-                    comment = time_sheet.range(f'{comment_column}{row}').value
+                    comment = time_sheet.range(f'{COMMENT_COLUMN}{row}').value
                     response = post_worklog_to_jira(ticket_number, duration_with_correct_locale, comment, date, headers)
                     if response.status_code == 201:
                         get_excel_loader().log_to_excel(f"Arbeitszeit fuer Ticket {ticket_number} erfolgreich zurueckgemeldet.\n")
@@ -110,11 +95,13 @@ def post_jira_times(sheet_name, password_reference):
                 else:
                     get_excel_loader().log_to_excel(f"Fuer Ticket {ticket_number} gibt es bereits eine passende Zeit.")
 
-        test_jira_output = checkJiraTimes.check_jira_times(sheet_name, password_reference)
+        test_jira_output = checkJiraTimes.check_jira_times(sheet_name)
         if test_jira_output is not None:
             get_excel_loader().log_to_excel(test_jira_output + '\n')
         else:
             get_excel_loader().log_to_excel("Schaut gut aus ;)")
+
+        get_open_tickets_for_user(user_info.get("email"), headers)
 
         wb.save()
 
@@ -124,15 +111,18 @@ def post_jira_times(sheet_name, password_reference):
         get_excel_loader().log_to_excel("Fehler beim Ausführen von post_jira_times: " + str(e) + "\n" + stacktrace)
 
 
-def get_user_locale(headers):
-    jira_domain = get_excel_loader().vba_settings_sheet.range(jira_domain_cell).value.rstrip("/")
+def get_user_info(headers):
+    jira_domain = get_excel_loader().vba_settings_sheet.range(JIRA_DOMAIN_CELL).value.rstrip("/")
     url = f"{jira_domain}/rest/api/2/myself"
 
     response = requests.get(url, headers=headers)
 
     if response.status_code == 200:
         user_data = response.json()
-        return user_data.get("locale", "en_US")  # Fallback auf 'en_US', falls nicht vorhanden
+        # Extrahiere Locale und E-Mail
+        user_locale = user_data.get("locale", "en_US")  # Fallback auf 'en_US'
+        user_email = user_data.get("emailAddress", None)  # Fallback auf None, falls nicht vorhanden
+        return {"locale": user_locale, "email": user_email}
     else:
         print(f"Fehler beim Abrufen der Benutzerdaten: {response.status_code}")
         return None
@@ -141,6 +131,25 @@ def get_user_locale(headers):
 def format_duration(duration_hours, user_locale):
     locale.setlocale(locale.LC_ALL, user_locale)  # Beispiel für Deutsch
     return locale.format_string("%.2f", duration_hours)
+
+
+def get_open_tickets_for_user(user_email, headers):
+    jira_domain = get_excel_loader().vba_settings_sheet.range(JIRA_DOMAIN_CELL).value.rstrip("/")
+    # JQL-Query, um offene Tickets eines Benutzers zu finden
+    jql_query = f'assignee = "{user_email}" AND statusCategory != Done ORDER BY created DESC'
+    url = f'{jira_domain}/rest/api/2/search'
+
+    # API-Request mit der JQL-Abfrage
+    params = {"jql": jql_query, "fields": "key"}  # Wir benötigen zunächst nur die Ticketnummer
+    response = requests.get(url, headers=headers, params=params)
+
+    if response.status_code == 200:
+        tickets = response.json().get("issues", [])
+        ticket_keys = [ticket["key"] for ticket in tickets]
+        return ticket_keys
+    else:
+        raise Exception(f"Fehler beim Abrufen der Tickets: {response.status_code} - {response.text}")
+
 
 
 def set_excel_loader(excel_loader):
@@ -157,7 +166,7 @@ def get_excel_loader():
     return global_excel_loader
 
 def main():
-    post_jira_times("Dienstag", "JIRA-API-KEY")
+    post_jira_times("Dienstag")
 
 
 if __name__ == "__main__":

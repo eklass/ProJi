@@ -11,6 +11,7 @@ then
 fi
 
 # 2. Virtuelle Umgebung erstellen
+cd ..
 echo "Erstelle virtuelle Umgebung..."
 python3 -m venv venv
 

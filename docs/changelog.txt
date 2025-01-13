@@ -10,6 +10,13 @@ Changelog for ProJi:
 - Introduced excelLoader to reduce duplicate coding and did some refactoring
 - Sent "," to Jira in Case of German Locale, otherwise we will use "."
 
-Changelog 10.01.2025
+Changelog 13.01.2025
 - Fetch User Locale to use , or . For Projecton Booking
 - Open Projektron Book Page after login, instead of expecting the first page to be a booking page
+- added new feature: fetching Jira Descriptions for Ticket after entering a ticket in cell
+- added new feature: fetching Jira Tickets (not closed ones) via button
+- rearranged VBA-Settings Sheet in Excel
+- introduced console output for VBA-Settings sheet
+- Projektron Tasks fetching (via button)
+- VPN Check against JIRA Url
+- Restructured the Coding into src folders and refactored the code
