@@ -67,13 +67,17 @@ def open_time_booking_page_in_projektron(driver):
     driver.get(f'{full_projektron_url}')
     return full_projektron_url
 
-
 def extract_2fa_code_and_display(driver):
-    # Wait for the 2FA number to be displayed
-    element = WebDriverWait(driver, 10).until(
-        EC.visibility_of_element_located((By.ID, 'idRichContext_DisplaySign'))
-    )
-    return element.text  # Extract the 2FA number
+    try:
+        # Warte, bis das 2FA-Element sichtbar ist
+        element = WebDriverWait(driver, 10).until(
+            EC.visibility_of_element_located((By.ID, 'idRichContext_DisplaySign'))
+        )
+        return element.text  # Extrahiere und gib den 2FA-Code zurück
+    except Exception:
+        # Falls das 2FA-Element nicht gefunden wird, informiere über das Fehlen und gib None zurück
+        get_excel_loader().log_to_excel("2FA-Code wurde nicht angezeigt, weiter ohne Code.")
+        return None
 
 
 def close_popups_in_projektron(driver):
