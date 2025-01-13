@@ -78,7 +78,7 @@ def fetch_missing_descriptions_from_jira():
 
             # Ergänze die Beschreibung in der entsprechenden Zeile
             row_index = existing_ticket_numbers.index(ticket_number) + 3  # Zeilenindex für Excel (3 = Startindex)
-            get_excel_loader().vba_settings_sheet.range(f"D{row_index}").value = description
+            get_excel_loader().vba_settings_sheet.range(f"D{row_index}").value = ticket_number + " - " + description
             get_excel_loader().log_to_excel(f"Beschreibung für Ticket {ticket_number} ergänzt: {description}")
         else:
             get_excel_loader().log_to_excel(f"Fehler beim Abrufen der Beschreibung für Ticket {ticket_number}: {response.status_code}")
@@ -101,7 +101,7 @@ def sync_tickets_to_excel(ticket_details):
 
     for ticket in ticket_details:
         ticket_number = ticket["key"]
-        description = ticket["description"]
+        description = ticket["key"] + " - " + ticket["description"]
 
         if ticket_number not in existing_tickets:
             if start_index <= 53:  # Sicherstellen, dass wir im Bereich D3:E53 bleiben
