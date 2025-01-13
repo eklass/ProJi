@@ -2,12 +2,13 @@ import os
 import queue
 import shutil
 import subprocess
+import sys
 import time
 import locale
 
 from datetime import datetime
 from selenium import webdriver
-from selenium.common import TimeoutException
+from selenium.common import TimeoutException, StaleElementReferenceException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -45,16 +46,20 @@ def login_to_website(driver, email, password):
     next_button = wait_for_element_to_be_clickable(driver, (By.ID, 'idSIButton9'))
     next_button.click()
 
-    # Warte, bis das Passwort-Eingabefeld interaktionsbereit ist und gib das Passwort ein
-    password_input = wait_for_element_to_be_clickable(driver, (By.NAME, 'passwd'))
-    password_input.send_keys(password)
+    # Überprüfe, ob das Passwortfeld vorhanden ist
+    try:
+        password_input = wait_for_element_to_be_clickable(driver, (By.NAME, 'passwd'))
+        password_input.send_keys(password)
 
-    # Warte, bis der Anmelde-Button klickbar ist, und klicke darauf
-    login_button = wait_for_element_to_be_clickable(driver, (By.ID, 'idSIButton9'))
-    login_button.click()
+        # Warte, bis der Anmelde-Button klickbar ist, und klicke darauf
+        login_button = wait_for_element_to_be_clickable(driver, (By.ID, 'idSIButton9'))
+        login_button.click()
+
+    except TimeoutException:
+        # Falls das Passwortfeld nicht erscheint, fahre direkt fort
+        get_excel_loader().log_to_excel("Passwortfeld wurde nicht angezeigt, weiter ohne Eingabe.")
 
     return extract_2fa_code_and_display(driver)
-
 
 def open_time_booking_page_in_projektron(driver):
     projektron_domain = get_excel_loader().vba_settings_sheet.range(PROJEKTRON_DOMAIN_CELL).value.rstrip("/")
