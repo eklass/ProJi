@@ -5,6 +5,7 @@ import subprocess
 import sys
 import time
 import locale
+import traceback
 
 from datetime import datetime
 from selenium import webdriver
@@ -322,9 +323,10 @@ def projektronLogin(driver, password, user, output_queue):
 
     try:
         two_fa_code = login_to_website(driver, user, password)
-
     except Exception as e:
-        get_excel_loader().log_to_excel(f"Ein Fehler ist aufgetreten: {e}")
+        # Fange den Fehler ab und logge ihn zusammen mit dem Stacktrace
+        error_message = f"Ein Fehler ist aufgetreten: {e}\n{traceback.format_exc()}"
+        get_excel_loader().log_to_excel(error_message)
         driver.quit()
 
     output_queue.put((driver, two_fa_code))
