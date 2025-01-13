@@ -2,14 +2,12 @@ import os
 import queue
 import shutil
 import subprocess
-import sys
 import time
-import locale
 import traceback
 
 from datetime import datetime
 from selenium import webdriver
-from selenium.common import TimeoutException, StaleElementReferenceException
+from selenium.common import TimeoutException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -71,7 +69,7 @@ def open_time_booking_page_in_projektron(driver):
 def extract_2fa_code_and_display(driver):
     try:
         # Warte, bis das 2FA-Element sichtbar ist
-        element = WebDriverWait(driver, 10).until(
+        element = WebDriverWait(driver, 3).until(
             EC.visibility_of_element_located((By.ID, 'idRichContext_DisplaySign'))
         )
         return element.text  # Extrahiere und gib den 2FA-Code zurück
@@ -351,10 +349,12 @@ def get_user_language(driver):
 
     return selected_language
 
-def format_duration(duration_hours, user_locale="de_DE"):
-    locale.setlocale(locale.LC_ALL, user_locale)
-    formatted_duration = locale.format_string("%.2f", duration_hours)
-    return formatted_duration
+def format_duration(duration_hours, user_locale):
+    formatted_duration = f"{duration_hours:.2f}"  # Dezimalstellen explizit formatieren
+    if user_locale.startswith("de_DE"):  # Prüfen, ob das Locale deutschsprachig ist
+        return formatted_duration.replace('.', ',')  # Punkt durch Komma ersetzen
+    else:
+        return formatted_duration.replace(',', '.')
 
 
 def set_excel_loader(excel_loader):

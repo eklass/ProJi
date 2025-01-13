@@ -32,7 +32,6 @@ def main():
 
 
 def post_projektron_times(sheet_name):
-    setup_excel(sheet_name)
 
     try:
         excel_loader = ExcelLoader()
