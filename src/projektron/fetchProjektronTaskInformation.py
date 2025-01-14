@@ -3,7 +3,6 @@ import queue
 import shutil
 import subprocess
 
-from datetime import datetime
 from selenium import webdriver
 from selenium.common import TimeoutException
 from selenium.webdriver.chrome.options import Options
@@ -150,6 +149,8 @@ def fetch_projektron_task_main(sheet_name):
 
     close_popups_in_projektron(driver)
 
+    start_spinner(driver)
+
     projektron_user_locale = get_excel_loader().vba_settings_sheet.range(PROJETRON_LOCALE_SETTING_CELL).value
     is_locale_set = projektron_user_locale != None and projektron_user_locale != ""
 
@@ -161,6 +162,8 @@ def fetch_projektron_task_main(sheet_name):
 
     get_excel_loader().log_to_excel("Fetching Projektron Tasks Information...")
     sync_projektron_tasks(driver)
+
+    stop_spinner(driver)
 
     return response
 
@@ -246,6 +249,82 @@ def write_tasks_to_excel(tasks):
         get_excel_loader().vba_settings_sheet.range(f"B{row_index}").value = task["description"]
 
     get_excel_loader().log_to_excel(f"{len(tasks)} Aufgaben wurden erfolgreich in Excel geschrieben.")
+
+
+# Methode zum Starten des Spinners
+def start_spinner(driver):
+    loading_animation = """
+    // Styles für das Overlay
+    var style = document.createElement('style');
+    style.type = 'text/css';
+    style.innerHTML = `
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    #loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-family: Arial, sans-serif;
+        color: white;
+    }
+    .spinner {
+        border: 10px solid #f3f3f3;
+        border-top: 10px solid #3498db;
+        border-radius: 50%;
+        width: 80px;
+        height: 80px;
+        animation: spin 1s linear infinite;
+    }
+    #loading-text {
+        margin-top: 20px;
+        font-size: 20px;
+        text-align: center;
+        background: none; /* Entferne den Hintergrund der Box */
+        padding: 0;      /* Entferne Innenabstand */
+        color: white;    /* Textfarbe bleibt weiß */
+    }
+    `;
+    document.head.appendChild(style);
+
+    // Overlay erstellen
+    var loadingDiv = document.createElement('div');
+    loadingDiv.id = 'loading-overlay';
+
+    // Spinner erstellen
+    var spinner = document.createElement('div');
+    spinner.className = 'spinner';
+
+    // Text erstellen
+    var loadingText = document.createElement('div');
+    loadingText.id = 'loading-text';
+    loadingText.innerHTML = 'Übertrage Projektron Tasks nach Excel... Bitte warten.';
+
+    // Elemente zusammenfügen
+    loadingDiv.appendChild(spinner);
+    loadingDiv.appendChild(loadingText);
+    document.body.appendChild(loadingDiv);
+    """
+    driver.execute_script(loading_animation)
+
+# Methode zum Stoppen des Spinners
+def stop_spinner(driver):
+    remove_overlay = """
+    var overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+        overlay.remove();
+    }
+    """
+    driver.execute_script(remove_overlay)
 
 
 def sync_projektron_tasks(driver):
