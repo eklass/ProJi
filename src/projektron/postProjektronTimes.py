@@ -56,6 +56,8 @@ def post_projektron_times(sheet_name):
                 get_excel_loader().log_to_excel("\nException: " + e)
             get_excel_loader().log_to_excel("\nResponse: " + response)
             wb.save()
+        else:
+            get_excel_loader().log_to_excel("Kein uebereinstimmenden Projektron Task im aktuellen Sheet gefunden\n")
     except Exception as e:
         stacktrace = traceback.format_exc()  # Stacktrace als String abrufen
         get_excel_loader().log_to_excel("Fehler beim Ausführen von post_projektron_times: " + str(e) + "\n" + stacktrace)
