@@ -224,6 +224,10 @@ def get_credentials(sheet_name, password_reference):
 
     username, password = credentials
 
+    if(',' in password or '"' in password):
+        password = password[1:-1]
+        password = password.replace('""', '"')
+
     if not password:
         get_excel_loader().log_to_excel("Passwort konnte nicht gefunden werden.")
         sys.exit(1)
