@@ -26,7 +26,10 @@ def show_applescript_popup():
     script = """
     display dialog "Ein Update ist verfügbar!\nBitte aktualisieren Sie Ihr Repository." buttons {"OK"} default button "OK"
     """
-    subprocess.run(["osascript", "-e", script], check=True)
+    try:
+        subprocess.run(["osascript", "-e", script], check=True, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError as e:
+        get_excel_loader().log_to_excel(f"Fehler beim Anzeigen des Popups: {e}")
 
 
 def setup_excel(sheet_name):
