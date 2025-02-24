@@ -144,12 +144,12 @@ def fill_task_details(task_row, duration, description):
 
 def save(driver):
     # Warte, bis der Speichern-Button bereit ist zum Klicken
-    save_button = wait_for_element_to_be_clickable(driver, (By.CSS_SELECTOR, "input.button.possible_default_button.hasChanges"))
+    save_button = wait_for_element_to_be_clickable(driver, (By.CSS_SELECTOR, "button.button.Apply.MainButton.possible_default_button.hasChanges"))
 
     # Klicke per JavaScript auf den Speichern-Button
     driver.execute_script("arguments[0].click();", save_button)
     time.sleep(2)
-
+    
 
 def task_exists(driver, description, duration, row_in_timesheet, message_in_case_of_missing_booking):
 
