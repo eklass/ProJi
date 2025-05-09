@@ -28,5 +28,6 @@ urllib3==2.2.3
 websocket-client==1.8.0
 wget==3.2
 wheel==0.45.1
+webdriver-manager==4.0.2
 wsproto==1.2.0
 xlwings==0.33.4

@@ -53,7 +53,8 @@ def post_projektron_times(sheet_name):
             try:
                 response = postProjektronTimesWithSelenium.main(tasks_to_add, date, sheet_name, headless)
             except Exception as e:
-                get_excel_loader().log_to_excel("\nException: " + e)
+                get_excel_loader().log_to_excel("\nException: " + str(e))
+                exit(1)
             get_excel_loader().log_to_excel("\nResponse: " + response)
             wb.save()
         else:
@@ -115,4 +116,4 @@ def get_excel_loader():
 
 
 if __name__ == "__main__":
-    post_projektron_times("Montag")
+    post_projektron_times("Dienstag")

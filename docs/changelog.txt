@@ -20,3 +20,10 @@ Changelog 13.01.2025
 - Projektron Tasks fetching (via button)
 - VPN Check against JIRA Url
 - Restructured the Coding into src folders and refactored the code
+
+Changelog 09.05.25 (Important)
+- Fixed Chrome Driver version issue. -> Move to a more generic solution with webdriver-manager 4.0.2
+- Added Possibility to add more than one Jira Accounts (introduced a new table sheet ProJi-Settings)
+- It is now possible to book times in one Jira multiple times per day. (Added comment as additional key for time comparison)
+- Moved to basic authentication for JIRA. Basic Authentication seems to work for all Jiras. (Bearer authentication not)
+!!! IMPORTANT: Change 1Password to don't use Jiras API Key. Instead please use Basic Authentication !!!

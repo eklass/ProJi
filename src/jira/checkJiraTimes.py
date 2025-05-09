@@ -1,10 +1,11 @@
 import sys
 import traceback
 import requests
+import base64
 from utils.getPasswordFrom1Password import get_credentials
 
 from utils.Constants import EMAIL_CELL, JIRA_TICKET_COLUMN, TIME_COLUMN, JIRA_STATUS_COLUMN, JIRA_DOMAIN_CELL, \
-    ONE_PASSWORD_REFERENCE_JIRA_CELL
+    ONE_PASSWORD_REFERENCE_JIRA_CELL, COMMENT_COLUMN
 from utils.excelLoader import ExcelLoader, extract_time_from_cell, convert_time_to_decimal
 
 # Ausgabevariable für die gesammelten Nachrichten
@@ -14,8 +15,19 @@ ticket_found = None
 global_excel_loader = None
 
 
+def get_password_reference(sheet_name, ticket_number):
+    time_sheet = get_excel_loader().get_sheet(sheet_name)
+    row = "isUnkownRightNow"
+    ticket_number = time_sheet.range(f'{ONE_PASSWORD_REFERENCE_JIRA_COLUMN}{row}').value
+    time_sheet.range(ONE_PASSWORD_REFERENCE_JIRA_CELL).value
+
+
 # Funktion zum Abrufen der Arbeitsprotokolle für ein Ticket aus der Jira-API
-def fetch_jira_data(ticket_number, date):
+def fetch_jira_data(sheet_name, ticket_number, date, comment):
+    #password_reference = get_password_reference(sheet_name, ticket_number) //TODO: Continue here to get PW reference dynamicaly
+    password_reference = get_excel_loader().vba_settings_sheet.range(ONE_PASSWORD_REFERENCE_JIRA_CELL).value
+    set_headers(sheet_name, password_reference)
+
     jira_domain = get_excel_loader().vba_settings_sheet.range(JIRA_DOMAIN_CELL).value.rstrip("/")
     url_template = f'{jira_domain}/rest/api/2/issue/{{issue_key}}/worklog'
 
@@ -40,7 +52,8 @@ def fetch_jira_data(ticket_number, date):
 
         for worklog in worklogs:
             if (worklog['author']['emailAddress'] == user_email
-                    and worklog['started'].startswith(date_str)):
+                    and worklog['started'].startswith(date_str)
+                    and (worklog.get('comment', '') == comment)):
 
                 total_time_logged_seconds = int(worklog['timeSpentSeconds'])
                 total_time_logged_hours = total_time_logged_seconds // 3600
@@ -64,12 +77,13 @@ def compare_jira_and_excel_times(sheet_name, row, date):
 
     time_sheet = get_excel_loader().get_sheet(sheet_name)
     ticket_number = time_sheet.range(f'{JIRA_TICKET_COLUMN}{row}').value
+    comment = time_sheet.range(f'{COMMENT_COLUMN}{row}').value
 
     if ticket_number:
         ticket_found = True
         duration = time_sheet.range(f'{TIME_COLUMN}{row}').value
         duration_formatted = extract_time_from_cell(time_sheet.range(f'{TIME_COLUMN}{row}')) if isinstance(duration, float) else duration
-        jira_data = fetch_jira_data(ticket_number, date)
+        jira_data = fetch_jira_data(sheet_name, ticket_number, date, comment)
 
         # Konvertiere Jira-Daten in Dezimalstunden
         jira_data_decimal = [convert_time_to_decimal(jira_time) for jira_time in jira_data]
@@ -91,10 +105,8 @@ def check_jira_times(sheet_name):
     set_excel_loader(excel_loader)
     
     ticket_found = False
-    password_reference = get_excel_loader().vba_settings_sheet.range(ONE_PASSWORD_REFERENCE_JIRA_CELL).value
     try:
         get_excel_loader().log_to_excel("Jira check ...")
-        set_headers(sheet_name, password_reference)
         if not time_sheet:
             get_excel_loader().log_to_excel(f"Das Blatt '{sheet_name}' wurde nicht gefunden.")
             return
@@ -120,11 +132,15 @@ def set_headers(sheet_name, password_reference):
     # Hier setzen Sie die Zelle, die den session_token enthält
     jira_credentials = get_credentials(sheet_name, password_reference)
     personal_access_token = jira_credentials['password']
+    username = jira_credentials['username']
     if not personal_access_token:
         get_excel_loader().log_to_excel("Error during fetching personal accessToken from 1Password in checkJiraTimes")
         return
 
-    headers = {'Authorization': f'Bearer {personal_access_token}'}
+#     # Basic Auth: Combine "username:api_token" and encode it in Base64
+    auth_string = f"{username}:{personal_access_token}"
+    encoded_auth = base64.b64encode(auth_string.encode('utf-8')).decode('utf-8')
+    headers = {'Authorization': f'Basic {encoded_auth}'}
 
 
 def set_excel_loader(excel_loader):

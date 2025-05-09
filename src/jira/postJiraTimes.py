@@ -4,6 +4,7 @@ import traceback
 import requests
 from jira import checkJiraTimes
 from utils.getPasswordFrom1Password import get_credentials
+import base64
 
 from utils.Constants import JIRA_TICKET_COLUMN, TIME_COLUMN, COMMENT_COLUMN, BOOK_COMMENTS_TO_JIRA_CHECK_CELL, \
     JIRA_DOMAIN_CELL, ONE_PASSWORD_REFERENCE_JIRA_CELL
@@ -54,10 +55,23 @@ def post_jira_times(sheet_name):
     try:
         get_excel_loader().log_to_excel("Posting Jira Times... ")
 
+        # Jira-Zugangsdaten abrufen
         jira_credentials = get_credentials(sheet_name, password_reference)
-        personal_access_token = jira_credentials['password']
+        username = jira_credentials['username']
+        api_token = jira_credentials['password']
+
+        # Sicherstellen, dass die Zugangsdaten vorhanden sind
+        if not username or not api_token:
+            get_excel_loader().log_to_excel("Error during fetching credentials (username or API token missing) in post_jira_times")
+            return
+
+        # Basic Auth: Combine "username:api_token" and encode it in Base64
+        auth_string = f"{username}:{api_token}"
+        encoded_auth = base64.b64encode(auth_string.encode('utf-8')).decode('utf-8')
+
+        # Setze den Authorization-Header für Basic Auth
         headers = {
-            'Authorization': f'Bearer {personal_access_token}'
+            'Authorization': f'Basic {encoded_auth}'
         }
 
         if time_sheet is None:
@@ -160,7 +174,7 @@ def get_excel_loader():
     return global_excel_loader
 
 def main():
-    post_jira_times("Dienstag")
+    post_jira_times("Montag")
 
 
 if __name__ == "__main__":

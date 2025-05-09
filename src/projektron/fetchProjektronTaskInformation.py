@@ -10,10 +10,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service as ChromeService
 
 from utils.getPasswordFrom1Password import get_credentials
 
-from utils.Constants import PROJETRON_LOCALE_SETTING_CELL, PROJEKTRON_STATUS_COLUMN, PROJEKTRON_DOMAIN_CELL, \
+from utils.Constants import PROJEKTRON_LOCALE_SETTING_CELL, PROJEKTRON_STATUS_COLUMN, PROJEKTRON_DOMAIN_CELL, \
     ONE_PASSWORD_REFERENCE_PROJEKTRON_CELL, HEADLESS_MODE_CELL
 from utils.excelLoader import ExcelLoader
 
@@ -132,9 +134,9 @@ def fetch_projektron_task_main(sheet_name):
         chrome_options = Options()
         chrome_options.headless = True
         chrome_options.add_argument("--headless")
-        driver = webdriver.Chrome(options=chrome_options)
+        driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
     else:
-        driver = webdriver.Chrome()
+        driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
 
     output_queue = queue.Queue()
     projektronLogin(driver, password, user, output_queue)
@@ -151,12 +153,12 @@ def fetch_projektron_task_main(sheet_name):
 
     start_spinner(driver)
 
-    projektron_user_locale = get_excel_loader().vba_settings_sheet.range(PROJETRON_LOCALE_SETTING_CELL).value
+    projektron_user_locale = get_excel_loader().vba_settings_sheet.range(PROJEKTRON_LOCALE_SETTING_CELL).value
     is_locale_set = projektron_user_locale != None and projektron_user_locale != ""
 
     if not is_locale_set:
         projektron_user_locale = get_user_language(driver)
-        get_excel_loader().vba_settings_sheet.range(PROJETRON_LOCALE_SETTING_CELL).value = projektron_user_locale
+        get_excel_loader().vba_settings_sheet.range(PROJEKTRON_LOCALE_SETTING_CELL).value = projektron_user_locale
         # Open Task Booking Page again, to proceed booking
         open_time_booking_page_in_projektron(driver)
 
