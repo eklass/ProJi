@@ -17,7 +17,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service as ChromeService
 
 from utils.getPasswordFrom1Password import get_credentials
-from utils.Constants import PROJEKTRON_LOCALE_SETTING_CELL, PROJEKTRON_STATUS_COLUMN, PROJEKTRON_DOMAIN_CELL, \
+from utils.Constants import PROJEKTRON_LOCALE_SETTING_CELL, WEEKDAY_PROJEKTRON_STATUS_COLUMN, PROJEKTRON_DOMAIN_CELL, \
     ONE_PASSWORD_REFERENCE_PROJEKTRON_CELL
 from utils.excelLoader import ExcelLoader, format_duration
 
@@ -115,7 +115,7 @@ def create_and_fill_tasks(driver, date_day, date_month, date_year, task_details_
             fill_task_details(task_row, formatted_hours, description)
         except TimeoutException:
             get_excel_loader().log_to_excel(f"TimeoutException: TaskID {task_group_oid} konnte nicht gefunden werden.")
-            get_excel_loader().get_time_sheet().range(PROJEKTRON_STATUS_COLUMN + row_in_timesheet).value = "Fehler"
+            get_excel_loader().get_time_sheet().range(WEEKDAY_PROJEKTRON_STATUS_COLUMN + row_in_timesheet).value = "Fehler"
             continue
 
 
@@ -169,10 +169,10 @@ def task_exists(driver, description, duration, row_in_timesheet, message_in_case
         for task_descr in task_descriptions:
             if description == task_descr.strip():
                 # and duration == task_duration:
-                get_excel_loader().get_time_sheet().range(PROJEKTRON_STATUS_COLUMN + row_in_timesheet).value = "passt"
+                get_excel_loader().get_time_sheet().range(WEEKDAY_PROJEKTRON_STATUS_COLUMN + row_in_timesheet).value = "passt"
                 return True
 
-    get_excel_loader().get_time_sheet().range(PROJEKTRON_STATUS_COLUMN + row_in_timesheet).value = message_in_case_of_missing_booking
+    get_excel_loader().get_time_sheet().range(WEEKDAY_PROJEKTRON_STATUS_COLUMN + row_in_timesheet).value = message_in_case_of_missing_booking
     return False
 
 

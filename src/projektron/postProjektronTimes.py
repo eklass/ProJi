@@ -2,8 +2,8 @@
 import traceback
 
 from projektron import postProjektronTimesWithSelenium
-from utils.Constants import COMMENT_COLUMN, DATE_CELL, HEADLESS_MODE_CELL, TIME_COLUMN, JIRA_TICKET_COLUMN, \
-    PROJEKTRON_TASK_COLUMN
+from utils.Constants import WEEKDAY_COMMENT_COLUMN, WEEKDAY_DATE_CELL, HEADLESS_MODE_CELL, WEEKDAY_TIME_COLUMN, WEEKDAY_JIRA_TICKET_COLUMN, \
+    WEEKDAY_PROJEKTRON_TASK_COLUMN
 from utils.excelLoader import ExcelLoader, extract_time_from_cell
 
 global_excel_loader = None
@@ -65,7 +65,7 @@ def post_projektron_times(sheet_name):
 
 
 def get_date(time_sheet):
-    return time_sheet.range(DATE_CELL).value
+    return time_sheet.range(WEEKDAY_DATE_CELL).value
 
 
 def get_headless_mode(settings_sheet):
@@ -82,17 +82,17 @@ def collect_tasks(time_sheet):
 
 
 def create_task(time_sheet, row):
-    duration = time_sheet.range(f'{TIME_COLUMN}{row}').value
+    duration = time_sheet.range(f'{WEEKDAY_TIME_COLUMN}{row}').value
     if duration == 0.0:
         return None
 
-    duration_formatted = extract_time_from_cell(time_sheet.range(f'{TIME_COLUMN}{row}')) if isinstance(duration, float) else duration
+    duration_formatted = extract_time_from_cell(time_sheet.range(f'{WEEKDAY_TIME_COLUMN}{row}')) if isinstance(duration, float) else duration
     if not duration_formatted:
         return None
 
-    ticket_number = time_sheet.range(f'{JIRA_TICKET_COLUMN}{row}').value
-    description = time_sheet.range(f'{COMMENT_COLUMN}{row}').value
-    human_readable_projektron_task_id = time_sheet.range(f'{PROJEKTRON_TASK_COLUMN}{row}').value
+    ticket_number = time_sheet.range(f'{WEEKDAY_JIRA_TICKET_COLUMN}{row}').value
+    description = time_sheet.range(f'{WEEKDAY_COMMENT_COLUMN}{row}').value
+    human_readable_projektron_task_id = time_sheet.range(f'{WEEKDAY_PROJEKTRON_TASK_COLUMN}{row}').value
     technical_task_id = get_technical_task_id(human_readable_projektron_task_id)
 
     if technical_task_id:

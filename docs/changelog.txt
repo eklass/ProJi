@@ -27,3 +27,5 @@ Changelog 09.05.25 (Important)
 - It is now possible to book times in one Jira multiple times per day. (Added comment as additional key for time comparison)
 - Moved to basic authentication for JIRA. Basic Authentication seems to work for all Jiras. (Bearer authentication not)
 !!! IMPORTANT: Change 1Password to don't use Jiras API Key. Instead please use Basic Authentication !!!
+- Fixed Ticket check, when there are multiple entries in excel (previous error: 2.49999999 did not matched; Fix made use of round() function)
+- Speed up Jira Booking and Checking due to reusing of sessions

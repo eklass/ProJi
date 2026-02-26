@@ -15,7 +15,7 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 
 from utils.getPasswordFrom1Password import get_credentials
 
-from utils.Constants import PROJEKTRON_LOCALE_SETTING_CELL, PROJEKTRON_STATUS_COLUMN, PROJEKTRON_DOMAIN_CELL, \
+from utils.Constants import PROJEKTRON_LOCALE_SETTING_CELL, WEEKDAY_PROJEKTRON_STATUS_COLUMN, PROJEKTRON_DOMAIN_CELL, \
     ONE_PASSWORD_REFERENCE_PROJEKTRON_CELL, HEADLESS_MODE_CELL
 from utils.excelLoader import ExcelLoader
 

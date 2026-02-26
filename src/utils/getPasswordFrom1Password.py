@@ -5,8 +5,8 @@ import subprocess
 import sys
 import time
 
-from utils.Constants import TIMESTAMP_CELL, STATUS_OF_SESSION_TOKEN_CELL, LOG_ONE_PASSWORD_ROUTINE_CELL, CONSOLE_OUTPUT_CELL, \
-    SESSION_TOKEN_CELL
+from utils.Constants import VBA_SHEET_PASSWORD_TOKEN_TIMESTAMP_CELL, VBA_SHEET_STATUS_OF_SESSION_TOKEN_CELL, LOG_ONE_PASSWORD_ROUTINE_CELL, WEEKDAY_CONSOLE_OUTPUT_CELL, \
+    VBA_SHEET_SESSION_TOKEN_CELL
 from utils.excelLoader import ExcelLoader
 
 # Pfad zur Datei, wo das Session-Token gespeichert werden soll
@@ -69,20 +69,20 @@ def add_1password_account(address, email, secret_key, master_password):
 
 
 def save_session_token(token):
-    get_excel_loader().vba_settings_sheet.range(SESSION_TOKEN_CELL).value = token
+    get_excel_loader().vba_settings_sheet.range(VBA_SHEET_SESSION_TOKEN_CELL).value = token
     current_time = datetime.datetime.now().strftime("%H:%M:%S")  # Formatierung der Uhrzeit
     # Eintragen der aktuellen Uhrzeit in die Zelle K5
-    get_excel_loader().vba_settings_sheet.range(TIMESTAMP_CELL).value = current_time
-    get_excel_loader().vba_settings_sheet.range(STATUS_OF_SESSION_TOKEN_CELL).value = 'valid'
+    get_excel_loader().vba_settings_sheet.range(VBA_SHEET_PASSWORD_TOKEN_TIMESTAMP_CELL).value = current_time
+    get_excel_loader().vba_settings_sheet.range(VBA_SHEET_STATUS_OF_SESSION_TOKEN_CELL).value = 'valid'
     get_excel_loader().wb.save()
 
 
 def load_session_token():
-    return get_excel_loader().vba_settings_sheet.range(SESSION_TOKEN_CELL).value
+    return get_excel_loader().vba_settings_sheet.range(VBA_SHEET_SESSION_TOKEN_CELL).value
 
 
 def remove_session_token():
-    get_excel_loader().vba_settings_sheet.range(SESSION_TOKEN_CELL).value = ''
+    get_excel_loader().vba_settings_sheet.range(VBA_SHEET_SESSION_TOKEN_CELL).value = ''
 
 
 def is_session_valid(sheet_name, session_token):
@@ -90,7 +90,7 @@ def is_session_valid(sheet_name, session_token):
     setup_excel(sheet_name)
     if not session_token:
         get_excel_loader().log_to_excel("No valid sessionToken")
-        get_excel_loader().vba_settings_sheet.range(STATUS_OF_SESSION_TOKEN_CELL).value = 'invalid'
+        get_excel_loader().vba_settings_sheet.range(VBA_SHEET_STATUS_OF_SESSION_TOKEN_CELL).value = 'invalid'
         get_excel_loader().wb.save()
         return False
 
@@ -108,9 +108,9 @@ def is_session_valid(sheet_name, session_token):
     if not session_valid:
         remove_session_token()
         get_excel_loader().log_to_excel("Cleaned Up Session Token")
-        get_excel_loader().vba_settings_sheet.range(STATUS_OF_SESSION_TOKEN_CELL).value = 'invalid'
+        get_excel_loader().vba_settings_sheet.range(VBA_SHEET_STATUS_OF_SESSION_TOKEN_CELL).value = 'invalid'
     else:
-        get_excel_loader().vba_settings_sheet.range(STATUS_OF_SESSION_TOKEN_CELL).value = 'valid'
+        get_excel_loader().vba_settings_sheet.range(VBA_SHEET_STATUS_OF_SESSION_TOKEN_CELL).value = 'valid'
     get_excel_loader().wb.save()
     get_excel_loader().wb.activate(True)
     return session_valid
@@ -254,7 +254,7 @@ def get_or_create_session_token(sheet_name, master_password, secret_key, email, 
 
 
 def clear_log(sheet):
-    sheet.range(CONSOLE_OUTPUT_CELL).value = ''
+    sheet.range(WEEKDAY_CONSOLE_OUTPUT_CELL).value = ''
 
 
 def read_session_token():
@@ -264,7 +264,7 @@ def read_session_token():
 
     while time.time() < timeout:
         # Lese den Wert der Zelle
-        session_token = get_excel_loader().vba_settings_sheet.range(SESSION_TOKEN_CELL).value
+        session_token = get_excel_loader().vba_settings_sheet.range(VBA_SHEET_SESSION_TOKEN_CELL).value
         if session_token:
             break
         time.sleep(0.5)  # Warte 0.5 Sekunden, bevor die nächste Überprüfung stattfindet

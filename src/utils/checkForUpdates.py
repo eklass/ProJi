@@ -1,7 +1,7 @@
 import subprocess
 import os
 
-from utils.Constants import REPO_STATUS_CELL, VBA_SETTINGS_SHEET_NAME
+from utils.Constants import VBA_SHEET_REPO_STATUS_CELL, VBA_SETTINGS_SHEET_NAME
 from utils.excelLoader import ExcelLoader
 
 global_excel_loader = None
@@ -15,11 +15,11 @@ def check_for_updates(project_root):
     result = subprocess.run(["git", "status", "-uno"], capture_output=True, text=True)
     if "behind" in result.stdout:
         get_excel_loader().log_to_excel("Ein Update ist verfügbar!\nBitte aktualisieren Sie Ihr Repository.", True)
-        get_excel_loader().vba_settings_sheet.range(REPO_STATUS_CELL).value = 'behind'
+        get_excel_loader().vba_settings_sheet.range(VBA_SHEET_REPO_STATUS_CELL).value = 'behind'
         show_applescript_popup()
     else:
         get_excel_loader().log_to_excel("ProJi Repo ist up to date.", True)
-        get_excel_loader().vba_settings_sheet.range(REPO_STATUS_CELL).value = 'latest'
+        get_excel_loader().vba_settings_sheet.range(VBA_SHEET_REPO_STATUS_CELL).value = 'latest'
 
 
 def show_applescript_popup():

@@ -1,6 +1,6 @@
 import xlwings as xw
 
-from utils.Constants import WORKBOOK_NAME, VBA_SETTINGS_SHEET_NAME, CONSOLE_OUTPUT_CELL, CONSOLE_OUTPUT_CELL_VBA_SHEET
+from utils.Constants import WORKBOOK_NAME, VBA_SETTINGS_SHEET_NAME, WEEKDAY_CONSOLE_OUTPUT_CELL, VBA_SHEET_CONSOLE_OUTPUT_CELL
 
 
 class ExcelLoader:
@@ -12,7 +12,7 @@ class ExcelLoader:
         self.vba_settings_sheet = None
         self.workbook_name = workbook_name or WORKBOOK_NAME
         self.vba_settings_sheet_name = vba_settings_sheet_name or VBA_SETTINGS_SHEET_NAME
-        self.console_output_cell = console_output_cell or CONSOLE_OUTPUT_CELL
+        self.console_output_cell = console_output_cell or WEEKDAY_CONSOLE_OUTPUT_CELL
 
     def load_excel(self, sheet_name):
         if not self.wb:
@@ -46,7 +46,7 @@ class ExcelLoader:
         # Aktuellen Wert der Zelle abrufen und sicherstellen, dass er ein String ist
         old_console_output_cell = self.console_output_cell
         if (self.time_sheet.name == VBA_SETTINGS_SHEET_NAME):
-            self.console_output_cell = CONSOLE_OUTPUT_CELL_VBA_SHEET
+            self.console_output_cell = VBA_SHEET_CONSOLE_OUTPUT_CELL
         current_value = self.time_sheet.range(self.console_output_cell).value
         if current_value is not None and clear == False:
             current_value = str(current_value)
@@ -65,11 +65,13 @@ class ExcelLoader:
 def extract_time_from_cell(cell):
     cell_value = cell.value
     try:
-        # Versuche, den Wert in einen float zu konvertieren
-        hours = float(cell_value) * 24  # Zelle wird in Stunden umgerechnet
-        return hours  # Gib die Stunden als Float zurück
+        # Versuche, den Wert in einen float zu konvertieren und in Stunden umzurechnen
+        hours = float(cell_value) * 24
+        # Runde auf maximal 2 Nachkommastellen
+        hours = round(hours, 2)
+        return hours
     except (ValueError, TypeError):
-        # Gib eine sinnvolle Fehlermeldung oder einen Fallback zurück, falls die Konvertierung fehlschlägt
+        # Gib None zurück, falls die Konvertierung fehlschlägt
         return None
 
 
